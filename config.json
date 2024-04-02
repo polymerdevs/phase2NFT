@@ -38,5 +38,21 @@
       "timeout": 36000
     }
   },
-  "backup": {}
+  "backup": {},
+  "phase2": {
+    "tokenFactory": {
+      "optimism": "0x7a231760c3De2611f1Cfd84428d293f963B0BCED",
+      "base": "0x380Ed9b6B8bEd0Af03067B6A5562eAA19a5FAe44"
+    },
+    "token": {
+      "name": "PolymerPhase2",
+      "symbol": "PolyP2",
+      "optimism": "0xF9F63c210B30c58a012aCA21d594659d31839734",
+      "base": "0x7ec872551F047c42da7F9450a44359b6a32FDCF8"
+    },
+    "faucet": {
+      "optimism": "0xf6BBed8E626723C1167e33B21b5D6657686d1EC2",
+      "base": "0x277319073E118C71E4636828E95b94270DBa329C"
+    }
+  }
 }

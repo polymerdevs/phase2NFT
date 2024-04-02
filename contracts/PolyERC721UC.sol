@@ -5,7 +5,7 @@ pragma solidity ^0.8.9;
 import "./base/UniversalChanIbcApp.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./IPolyERC20.sol";
+import "./interface/IPolyERC20.sol";
 
 contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
     uint256 public currentTokenId = 0;
@@ -56,7 +56,7 @@ contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
     }
 
     function randomMint(address recipient) public {
-        require(polymerToken.transferFrom(msg.sender, address(this), RND_MINT_PAYMENT), 'You need 60 PLT to mint a random NFT');
+        require(polymerToken.balanceOf(msg.sender) >= 60, 'You need 60 PLT to mint a random NFT');
         uint256 random = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender))) % 100;
         NFTType pType = NFTType.POLY1;
         if (random >= 40 && random < 70) {
@@ -69,11 +69,12 @@ contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
         mint(recipient, pType);
     }
 
-    function burnNFT(uint256 tokenId) public {
-        _requireMinted(tokenId);
-        _burn(tokenId);
-        delete tokenTypeMap[tokenId];
-    }
+    // need to implement here
+    // function burnNFT(uint256 tokenId) public {
+    //     _requireMinted(tokenId);
+    //     _burn(tokenId);
+    //     delete tokenTypeMap[tokenId];
+    // }
 
     function transferFrom(address from, address to, uint256 tokenId) public virtual override {
         revert("Transfer not allowed");

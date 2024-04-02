@@ -81,6 +81,21 @@ do-it:
     just send-packet optimism
     echo "You've done it!"
 
+deploy-factory:
+    npx hardhat run scripts/deployERCFactory.js --network optimism
+    npx hardhat run scripts/deployERCFactory.js --network base
+
+deploy-erc:
+    npx hardhat run scripts/deployERC20.js --network optimism
+    npx hardhat run scripts/deployERC20.js --network base
+
+deploy-faucet:
+    npx hardhat run scripts/deployFaucet.js --network optimism
+    npx hardhat run scripts/deployFaucet.js --network base
+
+faucet AT:
+    npx hardhat run scripts/run-faucet.js --network {{AT}}
+
 # Clean up the environment by removing the artifacts and cache folders and running the forge clean command
 # Usage: just clean
 clean:
