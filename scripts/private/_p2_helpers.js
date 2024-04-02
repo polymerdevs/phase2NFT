@@ -53,10 +53,40 @@ function updateFaucetDeploy(network, address) {
     }
 }
 
+function updateNFTDeploy(network, address) {
+    try {
+        const configPath = getConfigPath();
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        config['phase2']['NFT'][network] = address;
+        
+        // Write the updated config back to the file
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+        console.log(`🆗 Updated config.json for ERC20 Token with address ${address} on network ${network}`);
+    } catch (error) {
+        console.error('❌ Error updating config:', error);
+    }
+}
+
+function updateNFTGameDeploy(network, address) {
+    try {
+        const configPath = getConfigPath();
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        config['phase2']['NFTGame'][network] = address;
+        
+        // Write the updated config back to the file
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+        console.log(`🆗 Updated config.json for ERC20 Token with address ${address} on network ${network}`);
+    } catch (error) {
+        console.error('❌ Error updating config:', error);
+    }
+}
+
 module.exports = { 
     getConfigPath,
     updateFactoryDeploy,
     updateTokenDeploy,
-    updateFaucetDeploy
+    updateFaucetDeploy,
+    updateNFTDeploy,
+    updateNFTGameDeploy
 };
   

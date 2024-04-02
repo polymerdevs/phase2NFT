@@ -93,6 +93,13 @@ deploy-faucet:
     npx hardhat run scripts/deployFaucet.js --network optimism
     npx hardhat run scripts/deployFaucet.js --network base
 
+deploy-NFT:
+    npx hardhat run scripts/deployNFT.js --network base
+    npx hardhat run scripts/deployNFTGame.js --network optimism
+
+run-randomize-NFT SOURCE:
+    npx hardhat run scripts/run-randomize-NFT.js --network {{SOURCE}}
+
 faucet AT:
     npx hardhat run scripts/run-faucet.js --network {{AT}}
 

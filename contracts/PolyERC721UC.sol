@@ -5,14 +5,14 @@ pragma solidity ^0.8.9;
 import "./base/UniversalChanIbcApp.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./interface/IPolyERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
     uint256 public currentTokenId = 0;
     string public tokenURIC4 =
         "https://emerald-uncertain-cattle-112.mypinata.cloud/ipfs/QmZu7WiiKyytxwwKSwr6iPT1wqCRdgpqQNhoKUyn1CkMD3";
     
-    IPolyERC20 public polymerToken;
+    IERC20 public polymerToken;
     uint private constant RND_MINT_PAYMENT = 60 * 10**18; // 60 PLT
 
     event MintAckReceived(address receiver, uint256 tokenId, string message);
@@ -29,8 +29,15 @@ contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
     mapping(NFTType => string) public tokenURIs; // NFTType => tokenURI
     mapping(NFTType => uint256[]) public typeTokenMap; // NFTType => tokenId[]
     mapping(NFTType => uint256) public nftPrice; // NFTType => price
+    mapping(address => uint256[]) private userNFTs; // user => tokenId[]
+    mapping(NFTType => uint256) private refundAmount; // NFTType => amount
 
-    constructor(address _middleware, address _polyERC20Address) UniversalChanIbcApp(_middleware) ERC721("PolymerPhase2NFT", "PP2NFT") {
+    constructor(
+        address _middleware,
+        address _polyERC20Address,
+        string memory _nftName,
+        string memory _symbol
+    ) UniversalChanIbcApp(_middleware) ERC721(_nftName, _symbol) {
         tokenURIs[NFTType.POLY1] =
             "https://emerald-uncertain-cattle-112.mypinata.cloud/ipfs/QmZu7WiiKyytxwwKSwr6iPT1wqCRdgpqQNhoKUyn1CkMD3";
         tokenURIs[NFTType.POLY2] =
@@ -39,11 +46,18 @@ contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
             "https://emerald-uncertain-cattle-112.mypinata.cloud/ipfs/QmZu7WiiKyytxwwKSwr6iPT1wqCRdgpqQNhoKUyn1CkMD3";
         tokenURIs[NFTType.POLY4] =
             "https://emerald-uncertain-cattle-112.mypinata.cloud/ipfs/QmZu7WiiKyytxwwKSwr6iPT1wqCRdgpqQNhoKUyn1CkMD3";
+
         nftPrice[NFTType.POLY1] = 25 * 10**18;
         nftPrice[NFTType.POLY2] = 50 * 10**18;
         nftPrice[NFTType.POLY3] = 75 * 10**18;
         nftPrice[NFTType.POLY4] = 100 * 10**18;
-        polymerToken = IPolyERC20(_polyERC20Address);
+
+        refundAmount[NFTType.POLY1] = 5 * 10**18;
+        refundAmount[NFTType.POLY2] = 10 * 10**18;
+        refundAmount[NFTType.POLY3] = 15 * 10**18;
+        refundAmount[NFTType.POLY4] = 20 * 10**18;
+
+        polymerToken = IERC20(_polyERC20Address);
     }
 
     function mint(address recipient, NFTType pType) internal returns (uint256) {
@@ -51,12 +65,23 @@ contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
         uint256 tokenId = currentTokenId;
         tokenTypeMap[tokenId] = pType;
         typeTokenMap[pType].push(tokenId);
+        userNFTs[recipient].push(tokenId);
         _safeMint(recipient, tokenId);
         return tokenId;
     }
 
-    function randomMint(address recipient) public {
-        require(polymerToken.balanceOf(msg.sender) >= 60, 'You need 60 PLT to mint a random NFT');
+    function removeTokenIdFromTypeTokenMap(uint256 tokenId, NFTType nftType) internal {
+        uint256[] storage tokenIds = typeTokenMap[nftType];
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            if (tokenIds[i] == tokenId) {
+                tokenIds[i] = tokenIds[tokenIds.length - 1];
+                tokenIds.pop();
+                return; 
+            }
+        }
+    }
+
+    function randomMint() internal view returns (NFTType) {
         uint256 random = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender))) % 100;
         NFTType pType = NFTType.POLY1;
         if (random >= 40 && random < 70) {
@@ -66,15 +91,15 @@ contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
         } else if (random >= 90) {
             pType = NFTType.POLY4;
         }
-        mint(recipient, pType);
+        return pType;
     }
 
-    // need to implement here
-    // function burnNFT(uint256 tokenId) public {
-    //     _requireMinted(tokenId);
-    //     _burn(tokenId);
-    //     delete tokenTypeMap[tokenId];
-    // }
+    function burnNFT(uint256 tokenId) internal {
+        _requireMinted(tokenId);
+        _burn(tokenId);
+        removeTokenIdFromTypeTokenMap(tokenId, tokenTypeMap[tokenId]);
+        delete tokenTypeMap[tokenId];
+    }
 
     function transferFrom(address from, address to, uint256 tokenId) public virtual override {
         revert("Transfer not allowed");
@@ -124,11 +149,33 @@ contract PolyERC721UC is UniversalChanIbcApp, ERC721 {
     {
         recvedPackets.push(UcPacketWithChannel(channelId, packet));
 
-        (address _caller, NFTType tokenType) = abi.decode(packet.appData, (address, NFTType));
+        // burn first upon minting
+        
+        (address _caller, string memory packetType) = abi.decode(packet.appData, (address, string));
+        uint256 _refundAmount = 0;
 
-        uint256 tokenId = mint(_caller, tokenType);
+        if (keccak256(abi.encodePacked(packetType)) == keccak256(abi.encodePacked('buyNFT'))) {
+            // do buy NFT logic
+        } else if (keccak256(abi.encodePacked(packetType)) == keccak256(abi.encodePacked('randomNFT'))) {
+            uint256[] memory userTokenIds = userNFTs[_caller];
 
-        return AckPacket(true, abi.encode(_caller, tokenId));
+            NFTType nftType = randomMint();
+
+            for (uint256 i = 0; i < userTokenIds.length; i++) {
+                if (tokenTypeMap[userTokenIds[i]] == nftType) {
+                    // refund
+                    _refundAmount = refundAmount[nftType];
+                    break;
+                }
+            }
+
+            if (_refundAmount == 0) {
+                // if refund == 0, it means user has no NFT same type
+                mint(_caller, nftType);
+            }
+        }
+
+        return AckPacket(true, abi.encode(_refundAmount));
     }
 
     /**
