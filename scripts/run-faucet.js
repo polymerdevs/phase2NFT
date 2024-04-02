@@ -25,7 +25,6 @@ async function main() {
             channelIdBytes,
             timeoutSeconds,
         )
-        console.log(faucetToken);
         console.log(
             `Faucet on ${networkName}, waiting for the transaction to be finished`
         );
