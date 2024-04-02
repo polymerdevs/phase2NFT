@@ -53,6 +53,14 @@
     "faucet": {
       "optimism": "0xf6BBed8E626723C1167e33B21b5D6657686d1EC2",
       "base": "0x277319073E118C71E4636828E95b94270DBa329C"
+    },
+    "NFT": {
+      "name": "PolymerPhase2NFT",
+      "symbol": "PP2NFT",
+      "base": "0x49B33C8168Ac31c917687Af47F55B680bD5b18fF"
+    },
+    "NFTGame": {
+      "optimism": "0x7604aF343d92a2205996f83d3745Be77Ec1A61E5"
     }
   }
 }
