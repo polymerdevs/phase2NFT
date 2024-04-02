@@ -11,13 +11,12 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-function FaucetFlywheelPage() {
+function BuyNFTPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const onFinished = (winner) => {
     console.log(winner)
   }
-
 
   return (
       <div className='bg-white'>
@@ -47,7 +46,6 @@ function FaucetFlywheelPage() {
               <div>
                 <ConnectButton />
               </div>
-
             </div>
           </nav>
           <Dialog as="div" className="lg:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
@@ -159,4 +157,4 @@ function FaucetFlywheelPage() {
   );
 }
 
-export default FaucetFlywheelPage;
+export default BuyNFTPage;
