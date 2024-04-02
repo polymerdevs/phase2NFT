@@ -16,3 +16,5 @@ node_modules
 # Foundry files
 /out
 /cache_forge
+
+/client/node_modules
